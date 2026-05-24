@@ -1,12 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { Image, Video, FileText, X, Send, Smile } from 'lucide-react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../../firebase';
+import { db } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { v4 as uuidv4 } from 'uuid';
 import toast from 'react-hot-toast';
 import './PostComposer.css';
+
+const CLOUDINARY_CLOUD_NAME = 'g2jdlit4';
+const CLOUDINARY_UPLOAD_PRESET = 'Buddys';
 
 export default function PostComposer({ onPost }) {
   const { currentUser, userProfile } = useAuth();
@@ -29,16 +30,25 @@ export default function PostComposer({ onPost }) {
     setPreviews(prev => prev.filter((_, idx) => idx !== i));
   }
 
+  async function uploadToCloudinary(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`,
+      { method: 'POST', body: formData }
+    );
+    const data = await res.json();
+    return data.secure_url;
+  }
+
   async function handlePost() {
     if (!text.trim() && files.length === 0) return;
     setLoading(true);
     try {
       const mediaItems = [];
       for (const file of files) {
-        const storePath = `posts/${currentUser.uid}/${uuidv4()}`;
-        const storageRef = ref(storage, storePath);
-        await uploadBytes(storageRef, file);
-        const url = await getDownloadURL(storageRef);
+        const url = await uploadToCloudinary(file);
         mediaItems.push({ url, type: file.type.startsWith('video') ? 'video' : 'image' });
       }
       await addDoc(collection(db, 'posts'), {
