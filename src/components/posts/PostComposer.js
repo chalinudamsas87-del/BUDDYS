@@ -6,7 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import './PostComposer.css';
 
-const CLOUDINARY_CLOUD_NAME = 'g2jdlit4';
+const CLOUDINARY_CLOUD_NAME = 'g2jdiit4';
 const CLOUDINARY_UPLOAD_PRESET = 'Buddys';
 
 export default function PostComposer({ onPost }) {
